@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Using Exiv2:
 #   exiv2 -T mv DST.JPG
-#     Set date/time from timestampt
+#     Set date/time from timestamp
 #   exiv2 -a '-0:00:30' ad DST.JPG
 #     Shift exif timestamp
 #     Removes SubSecTime[Original|Digitized]
@@ -29,6 +29,10 @@ import subprocess
 afterwards."""
 def parse_exif_time(txt):
     return time.mktime(time.strptime(txt, "%Y:%m:%d %H:%M:%S"))
+
+
+def format_exif_time(secs):
+    return time.strftime("%Y:%m:%d %H:%M:%S", time.localtime(secs))
 
 
 """Parse time (and date) given on command line.  Returning tuple with two elements.
@@ -76,19 +80,27 @@ def format_time_delta(delta):
         )
 
 
+def exif_get_time(filename):
+    img_time = subprocess.check_output(
+            ["exif", "-mt", "0x9003", filename])
+    img_time = parse_exif_time(img_time.strip())
+
+    return img_time
+
+
+def exif_set_time(filename, time_val):
+    time_str = format_exif_time(time_val)
+    subprocess.check_output(
+            ["exif", "--ifd=EXIF", "-mt", "0x9003", "--set-value", time_str, "-o", filename, filename])
+
+
 def process_timeref_args(ref_image, ref_time):
     global args
 
     (ref_time_hasdate, ref_time) = parse_cmdline_time(ref_time)
 
     # Read time from reference image
-    try:
-        ref_img_timestr = subprocess.check_output(
-                ["exif", "-mt", "0x9003", ref_image.name])
-        ref_img_time = parse_exif_time(ref_img_timestr.strip())
-    except subprocess.CalledProcessError:
-        print "Error: Could not execute 'exif'"
-        return 1
+    ref_img_time = exif_get_time(ref_image.name)
 
     # Set reference date of file when no date given
     if not ref_time_hasdate:
@@ -104,10 +116,14 @@ def process_timeref_args(ref_image, ref_time):
 
     # Print some info
     if args.verbosity >= 1:
-        print "Reference image date/time is set to: %s" % \
-                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_img_time))
-        print "Reference image date/time should be: %s" % \
-                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_time))
+        print "Reference image date/time is set to: %s.%02d" % (
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_img_time)),
+                (ref_img_time % 1) * 100,
+            )
+        print "Reference image date/time should be: %s.%02d" % (
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_time)),
+                (ref_time % 1) * 100,
+            )
         print "Date/time fixing delta: %s" % \
                 format_time_delta(time_offset)
 
@@ -172,7 +188,11 @@ def main():
 
     # Calculate time offset to apply
     if args.ref_image or args.ref_time:
-        time_offset = process_timeref_args(args.ref_image, args.ref_time)
+        try:
+            time_offset = process_timeref_args(args.ref_image, args.ref_time)
+        except subprocess.CalledProcessError:
+            print "Error executing exif"
+            return -1
     else:
         time_offset = None
 
@@ -194,21 +214,18 @@ def main():
                 format_time_delta(time_offset)
 
         for target in args.images:
-            print "  processing %s" % target.name
+            print "  %s" % target.name
 
-            #exif -m -t 0x9003 TIMESRC.JPG
-            #  Fetch Date and Time (Original)
-            #  Output: "2011:08:14 19:42:33"
-            #exif -m -t 0x9291 TIMESRC.JPG
-            #  Fetch original subsecond
-            #  Output: "20"
+            file_time = exif_get_time(target.name)
+            new_time = file_time + time_offset
+            exif_set_time(target.name, new_time)
 
     # Set GPS data
     if gpx:
         print "Setting GPS data"
 
         for target in args.images:
-            print "  processing %s" % target.name
+            print "  %s" % target.name
 
 
 if __name__ == "__main__":
