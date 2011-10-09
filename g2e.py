@@ -60,7 +60,10 @@ def parse_cmdline_time(txt):
     except ValueError:
         pass
 
-def format_time_delta(delta):
+    raise ValueError("Can not parse date/time %s" % repr(txt))
+
+
+def format_time_offset(delta):
     if not delta:
         return ""
 
@@ -78,6 +81,56 @@ def format_time_delta(delta):
             delta / 60 % 60,
             delta % 60,
         )
+
+
+def parse_time_offset(txt):
+    parse_err = ValueError("Can not parse time offset %s" % repr(txt))
+
+    if not txt:
+        raise parse_err
+
+    # Save and remove +/- sign
+    if txt[0] == '+':
+        sign = 1
+    elif txt[0] == '-':
+        sign = -1
+    else:
+        raise parse_err
+
+    txt = txt[1:]
+
+    # Parse days
+    values = txt.split(' ', 1)
+    if len(values) > 1:
+        try:
+            days = int(values[0])
+        except ValueError:
+            raise parse_err
+        txt = values[1]
+    else:
+        days = 0
+
+    # Parse [[%H:]%M:]%S
+    values = txt.split(':', 2)
+
+    secs = int(values[-1])
+    del values[-1]
+
+    if values:
+        mins = int(values[-1])
+        del values[-1]
+    else:
+        mins = 0
+
+    if values:
+        hours = int(values[-1])
+        del values[-1]
+    else:
+        hours = 0
+
+    offset = ((days * 24 + hours) * 60 + mins) * 60 + secs
+
+    return sign * offset
 
 
 def exif_get_time(filename):
@@ -125,40 +178,57 @@ def process_timeref_args(ref_image, ref_time):
                 (ref_time % 1) * 100,
             )
         print "Date/time fixing delta: %s" % \
-                format_time_delta(time_offset)
+                format_time_offset(time_offset)
 
     return time_offset
+
+
+def gpx_find_enclosing(gpxs, file_time):
+    # TODO: timezone conversion necessary?
+
+    for gpx in gpxs:
+        # Skip gpx if file time is out of its bounds
+        if file_time < gpx["flat"][0].time:
+            return None
+        if file_time > gpx["flat"][-1].time:
+            return None
+
+        for idx, p in enumerate(gpx["flat"][1:]):
+            if file_time < p.time:
+                return (gpx["flat"][idx], p)
+
+    return None
 
 
 def main():
     global args
 
     description="Set image location EXIF tags from corrsponding GPS track." \
-            " Optionally fix the images' date/time offset first."
+            " Optionally shift the images' date/time first."
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument("--ref-img", dest="ref_image", type=file,
-            help="reference image file name for fixing time offset using --ref-time")
+            help="reference image file name for shifting time using --ref-time")
 
     parser.add_argument("--ref-time", dest="ref_time",
             help=
-            "Corrected reference image date/time to calculate time offset."
+            "Corrected reference image date/time to calculate time offset for shifting."
             " If one of --ref-img and --ref-time is given the other one must be given too.")
 
-    parser.add_argument("--fix-time", dest="fix_time",
+    parser.add_argument("--shift-time", dest="shift_time",
             help=
-            "Apply given time offset to all images."
-            " Example: '--fix-time +1:09' to add 1 minute, 9 seconds"
+            "Shift time of all images by given offset."
+            " Example: '--shift-time=+1:09' to add 1 minute, 9 seconds"
             " to the images' EXIF time.")
 
-    parser.add_argument("--gpx", dest="gpx", metavar="GPX", type=file, action="append",
+    parser.add_argument("--gpx", dest="gpxs", metavar="GPX", type=file, action="append", default=[],
             help=".gpx GPS track file")
 
     parser.add_argument("-n", dest="no_action", action="store_true", default=False,
-            help=".gpx GPS track file")
+            help="do not change any files")
 
     parser.add_argument("-v", dest="verbosity", action="count", default=0,
-            help=".gpx GPS track file")
+            help="increase verbosity")
 
     parser.add_argument("images", metavar="IMAGE", type=file, nargs="+",
             help="image file to process")
@@ -175,6 +245,9 @@ def main():
     if bool(args.ref_image) ^ bool(args.ref_time):
         parser.error("Options --ref-img and --ref-time must be given both or none.")
 
+    if bool(args.ref_image) and args.shift_time:
+        parser.error("Option --shift-time can not be used with --ref-img/--ref-time.")
+
     # check that we can execute "exif"
     try:
         subprocess.check_output(["exif", "-v"])
@@ -186,23 +259,27 @@ def main():
     if args.verbosity >= 1:
         print "Assuming image time zone %s/%s" % time.tzname
 
-    # Calculate time offset to apply
+    time_offset = None
+
+    # Parse time offset given at command line
+    if args.shift_time:
+        time_offset = parse_time_offset(args.shift_time)
+
+    # Calculate time offset from reference image
     if args.ref_image or args.ref_time:
         try:
             time_offset = process_timeref_args(args.ref_image, args.ref_time)
         except subprocess.CalledProcessError:
             print "Error executing exif"
             return -1
-    else:
-        time_offset = None
 
     # Read GPS data
-    gpx = []
-    for gpxfile in args.gpx:
+    gpxs = []
+    for gpxfile in args.gpxs:
         print "Reading GPX file %s" % gpxfile.name
         data = gpxparser.GPXFile(gpxfile)
         data.flatten()
-        gpx.append(data)
+        gpxs.append(data)
 
         if args.verbosity >= 2:
             for p in data["flat"]:
@@ -211,21 +288,29 @@ def main():
     # Fix time offset
     if time_offset:
         print "Applying date/time delta %s" % \
-                format_time_delta(time_offset)
+                format_time_offset(time_offset)
 
         for target in args.images:
             print "  %s" % target.name
 
             file_time = exif_get_time(target.name)
             new_time = file_time + time_offset
+
+            if args.no_action:
+                continue
+
             exif_set_time(target.name, new_time)
 
     # Set GPS data
-    if gpx:
+    if gpxs:
         print "Setting GPS data"
 
         for target in args.images:
             print "  %s" % target.name
+
+            file_time = exif_get_time(target.name)
+            gpx_points = gpx_find_enclosing(gpxs, file_time)
+            # TODO
 
 
 if __name__ == "__main__":
