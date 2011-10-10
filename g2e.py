@@ -310,6 +310,12 @@ def main():
 
             file_time = exif_get_time(target.name)
             gpx_points = gpx_find_enclosing(gpxs, file_time)
+            print "Time: %s" % file_time
+            print gpx_points[0]
+            print gpx_points[1]
+            print "Distance: %s" % gpx_points[0].distance(gpx_points[1])
+            print gpx_points[0].interpolate(gpx_points[1], file_time)
+
             # TODO
 
 
