@@ -187,15 +187,14 @@ def gpx_find_enclosing(gpxs, file_time):
     # TODO: timezone conversion necessary?
 
     for gpx in gpxs:
-        # Skip gpx if file time is out of its bounds
-        if file_time < gpx["flat"][0].time:
-            return None
-        if file_time > gpx["flat"][-1].time:
-            return None
-
-        for idx, p in enumerate(gpx["flat"][1:]):
-            if file_time < p.time:
-                return (gpx["flat"][idx], p)
+        for track_id, track in gpx.tracks.iteritems():
+            # Skip track if file time is out of its bounds
+            if file_time < track[0].time or file_time > track[-1].time:
+                continue
+            
+            for idx, p in enumerate(track[1:]):
+                if file_time < p.time:
+                    return (track[idx], p)
 
     return None
 
@@ -278,12 +277,17 @@ def main():
     for gpxfile in args.gpxs:
         print "Reading GPX file %s" % gpxfile.name
         data = gpxparser.GPXFile(gpxfile)
-        data.flatten()
+        print "  %d points in %d tracks" % (
+                sum([len(t) for t_id, t in data.tracks.iteritems()]),
+                len(data.tracks),
+            )
         gpxs.append(data)
 
         if args.verbosity >= 2:
-            for p in data["flat"]:
-                print p
+            for t_id, track in data.tracks.iteritems():
+                print "Track %s:" % t_id
+                for p in track:
+                    print "  %s" % p
 
     # Fix time offset
     if time_offset:
@@ -310,11 +314,16 @@ def main():
 
             file_time = exif_get_time(target.name)
             gpx_points = gpx_find_enclosing(gpxs, file_time)
-            print "Time: %s" % file_time
-            print gpx_points[0]
-            print gpx_points[1]
-            print "Distance: %s" % gpx_points[0].distance(gpx_points[1])
-            print gpx_points[0].interpolate(gpx_points[1], file_time)
+            if not gpx_points:
+                print "    No GPS data at the time of this photo"
+                continue
+
+            print "    Time: %s" % file_time
+            print "    %s" % gpx_points[0]
+            print "    %s" % gpx_points[1]
+            print "    Distance: %.1f m" % (gpx_points[0].distance(gpx_points[1]) * 1000)
+            print "    Time gap: %s s" % (gpx_points[1].time - gpx_points[0].time)
+            print "    %s" % gpx_points[0].interpolate(gpx_points[1], file_time)
 
             # TODO
 
