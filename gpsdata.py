@@ -1,5 +1,7 @@
 import math
 
+EARTH_RADIUS = 6378.0
+
 class GPSPoint:
     def __init__(self, lat, lon, ele=0, time=0):
         self.lat = lat
@@ -22,7 +24,7 @@ class GPSPoint:
         lat2 = other.lat / 180. * math.pi
         lon2 = other.lon / 180. * math.pi
 
-        R = 6378.0
+        R = EARTH_RADIUS
 
         d = R * math.acos(
                 math.sin(lat1) * math.sin(lat2) + 
@@ -48,7 +50,7 @@ class GPSPoint:
         lon2 = gps2.lon / 180. * math.pi
 
 
-        R = 6378.0
+        R = EARTH_RADIUS
 
         # Calculate current point as fraction between the two GPS points
         frac = (time - gps1.time) / (gps2.time - gps1.time)
