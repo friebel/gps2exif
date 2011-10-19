@@ -3,7 +3,7 @@ import math
 EARTH_RADIUS = 6378.0
 
 class GPSPoint:
-    def __init__(self, lat, lon, ele=0, time=0):
+    def __init__(self, lat, lon, ele=None, time=None):
         self.lat = lat
         self.lon = lon
         self.ele = ele
@@ -14,7 +14,7 @@ class GPSPoint:
             'time=%s' % self.time,
             'lat=%.6f' % self.lat,
             'lon=%.6f' % self.lon,
-            'ele=%.3f' % self.ele,
+            'ele=%s' % self.ele,
             ))
 
     """Calculate distance in km between two GPS points."""
@@ -48,7 +48,6 @@ class GPSPoint:
         lon1 = gps1.lon / 180. * math.pi
         lat2 = gps2.lat / 180. * math.pi
         lon2 = gps2.lon / 180. * math.pi
-
 
         R = EARTH_RADIUS
 
@@ -84,9 +83,13 @@ class GPSPoint:
         data = {
                 'lat' : lat_i / math.pi * 180,
                 'lon' : lon_i / math.pi * 180,
-                'ele' : gps1.ele + frac * (gps2.ele - gps1.ele),
                 'time' : time,
             }
+
+        if gps1.ele != None and gps2.ele != None:
+            data['ele'] = gps1.ele + frac * (gps2.ele - gps1.ele)
+        else:
+            data['ele'] = None
 
         return GPSPoint(**data)
 

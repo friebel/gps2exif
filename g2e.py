@@ -1,38 +1,13 @@
 #!/usr/bin/env python
-# Using Exiv2:
-#   exiv2 -T mv DST.JPG
-#     Set date/time from timestamp
-#   exiv2 -a '-0:00:30' ad DST.JPG
-#     Shift exif timestamp
-#     Removes SubSecTime[Original|Digitized]
-#   exiv2 fixiso DST.JPG
-#     Create exif ISO entry from Nikon entry
-# Using exif:
-#   exif -m -t 0x9003 TIMESRC.JPG
-#     Fetch Date and Time (Original)
-#     Output: "2011:08:14 19:42:33"
-#   exif -m -t 0x9291 TIMESRC.JPG
-#     Fetch original subsecond
-#     Output: "20"
 # Notes:
 # * Image time zone as cmd line parameter
 
 import argparse
 import calendar
+import exif
 import gpxparser
 import sys
 import time
-import subprocess
-
-
-"""Interpret given EXIF time as UTC time.  Timezone adaption should be applied
-afterwards."""
-def parse_exif_time(txt):
-    return time.mktime(time.strptime(txt, "%Y:%m:%d %H:%M:%S"))
-
-
-def format_exif_time(secs):
-    return time.strftime("%Y:%m:%d %H:%M:%S", time.localtime(secs))
 
 
 """Parse time (and date) given on command line.  Returning tuple with two elements.
@@ -133,27 +108,13 @@ def parse_time_offset(txt):
     return sign * offset
 
 
-def exif_get_time(filename):
-    img_time = subprocess.check_output(
-            ["exif", "-mt", "0x9003", filename])
-    img_time = parse_exif_time(img_time.strip())
-
-    return img_time
-
-
-def exif_set_time(filename, time_val):
-    time_str = format_exif_time(time_val)
-    subprocess.check_output(
-            ["exif", "--ifd=EXIF", "-mt", "0x9003", "--set-value", time_str, "-o", filename, filename])
-
-
 def process_timeref_args(ref_image, ref_time):
     global args
 
     (ref_time_hasdate, ref_time) = parse_cmdline_time(ref_time)
 
     # Read time from reference image
-    ref_img_time = exif_get_time(ref_image.name)
+    ref_img_time = exif.get_time(ref_image.name)
 
     # Set reference date of file when no date given
     if not ref_time_hasdate:
@@ -204,6 +165,7 @@ def main():
 
     description="Set image location EXIF tags from corrsponding GPS track." \
             " Optionally shift the images' date/time first."
+
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument("--ref-img", dest="ref_image", type=file,
@@ -223,6 +185,12 @@ def main():
     parser.add_argument("--gpx", dest="gpxs", metavar="GPX", type=file, action="append", default=[],
             help=".gpx GPS track file")
 
+    parser.add_argument("--max-dist", dest="max_dist", metavar="MTRS", type=int, default=30,
+            help="skip if enclosing GPS points are more than MTRS meters apart (default: %(default)s)")
+
+    parser.add_argument("--max-span", dest="max_span", metavar="SECS", type=int, default=610,
+            help="skip if enclosing GPS points are more than SECS seconds apart (default: %(default)s)")
+
     parser.add_argument("-n", dest="no_action", action="store_true", default=False,
             help="do not change any files")
 
@@ -238,8 +206,6 @@ def main():
         print e
         return 1
 
-    #print args
-
     # ref_image and ref_time must be given both or none
     if bool(args.ref_image) ^ bool(args.ref_time):
         parser.error("Options --ref-img and --ref-time must be given both or none.")
@@ -248,10 +214,7 @@ def main():
         parser.error("Option --shift-time can not be used with --ref-img/--ref-time.")
 
     # check that we can execute "exif"
-    try:
-        subprocess.check_output(["exif", "-v"])
-    except subprocess.CalledProcessError:
-        print "Error: Could not execute 'exif' application"
+    if not exif.init():
         return 1
 
     # Time zone info
@@ -268,8 +231,8 @@ def main():
     if args.ref_image or args.ref_time:
         try:
             time_offset = process_timeref_args(args.ref_image, args.ref_time)
-        except subprocess.CalledProcessError:
-            print "Error executing exif"
+        except:
+            print "Error updating EXIF data"
             return -1
 
     # Read GPS data
@@ -277,10 +240,11 @@ def main():
     for gpxfile in args.gpxs:
         print "Reading GPX file %s" % gpxfile.name
         data = gpxparser.GPXFile(gpxfile)
-        print "  %d points in %d tracks" % (
-                sum([len(t) for t_id, t in data.tracks.iteritems()]),
-                len(data.tracks),
-            )
+        if args.verbosity >= 1:
+            print "  %d points in %d tracks" % (
+                    sum([len(t) for t_id, t in data.tracks.iteritems()]),
+                    len(data.tracks),
+                )
         gpxs.append(data)
 
         if args.verbosity >= 2:
@@ -297,35 +261,72 @@ def main():
         for target in args.images:
             print "  %s" % target.name
 
-            file_time = exif_get_time(target.name)
+            file_time = exif.get_time(target.name)
             new_time = file_time + time_offset
 
             if args.no_action:
                 continue
 
-            exif_set_time(target.name, new_time)
+            exif.set_time(target.name, new_time)
 
     # Set GPS data
     if gpxs:
         print "Setting GPS data"
 
         for target in args.images:
-            print "  %s" % target.name
+            print "  %s:" % target.name,
+            if args.verbosity >= 2:
+                print
 
-            file_time = exif_get_time(target.name)
+            file_time = exif.get_time(target.name)
             gpx_points = gpx_find_enclosing(gpxs, file_time)
             if not gpx_points:
-                print "    No GPS data at the time of this photo"
+                if args.verbosity >= 2:
+                    print "    No GPS data at the time of this photo"
+                else:
+                    print "no data"
                 continue
 
-            print "    Time: %s" % file_time
-            print "    %s" % gpx_points[0]
-            print "    %s" % gpx_points[1]
-            print "    Distance: %.1f m" % (gpx_points[0].distance(gpx_points[1]) * 1000)
-            print "    Time gap: %s s" % (gpx_points[1].time - gpx_points[0].time)
-            print "    %s" % gpx_points[0].interpolate(gpx_points[1], file_time)
+            # Calculate time gap and distance
+            time_gap = gpx_points[1].time - gpx_points[0].time
+            distance = gpx_points[0].distance(gpx_points[1]) * 1000
 
-            # TODO
+            if args.verbosity >= 2:
+                print "    Time:     %s" % file_time
+                print "    Before:   %s" % gpx_points[0]
+                print "    After:    %s" % gpx_points[1]
+                print "    Time gap: %s s" % time_gap
+                print "    Distance: %.1f m" % distance
+                print "   ",
+
+            # Skip if time_gap or distance too big
+            if distance > args.max_dist:
+                print "Distance too big",
+                if args.verbosity >= 1:
+                    print "(%s m)" % distance,
+                print
+                continue
+
+            if time_gap > args.max_span:
+                print "Time span too big",
+                if args.verbosity >= 1:
+                    print "(%s s)" % time_gap,
+                print
+                continue
+
+            # Interpolate position
+            image_gps = gpx_points[0].interpolate(gpx_points[1], file_time)
+
+            if args.verbosity >= 2:
+                print "Position: %s" % image_gps
+            else:
+                print "ok"
+
+            if args.no_action:
+                continue
+
+            # Write exif data
+            exif.set_gpslocation(target.name, image_gps.lat, image_gps.lon, image_gps.ele)
 
 
 if __name__ == "__main__":
