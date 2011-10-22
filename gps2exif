@@ -185,11 +185,17 @@ def main():
     parser.add_argument("--gpx", dest="gpxs", metavar="GPX", type=file, action="append", default=[],
             help=".gpx GPS track file")
 
-    parser.add_argument("--max-dist", dest="max_dist", metavar="MTRS", type=int, default=30,
+    parser.add_argument("--max-dist", dest="max_dist", metavar="MTRS", type=int, default=200,
             help="skip if enclosing GPS points are more than MTRS meters apart (default: %(default)s)")
 
-    parser.add_argument("--max-span", dest="max_span", metavar="SECS", type=int, default=610,
+    parser.add_argument("--max-span", dest="max_span", metavar="SECS", type=int, default=3600,
             help="skip if enclosing GPS points are more than SECS seconds apart (default: %(default)s)")
+
+    parser.add_argument("--ok-dist", dest="ok_dist", metavar="MTRS", type=int, default=32,
+            help="assign if enclosing GPS points are less than MTRS meters apart (default: %(default)s)")
+
+    parser.add_argument("--ok-span", dest="ok_span", metavar="SECS", type=int, default=10,
+            help="assign if enclosing GPS points are less than SECS seconds apart (default: %(default)s)")
 
     parser.add_argument("-n", dest="no_action", action="store_true", default=False,
             help="do not change any files")
@@ -299,18 +305,26 @@ def main():
                 print "    Distance: %.1f m" % distance
                 print "   ",
 
-            # Skip if time_gap or distance too big
-            if distance > args.max_dist:
-                print "Distance too big",
-                if args.verbosity >= 1:
-                    print "(%s m)" % distance,
+            # Skip if time_gap or distance beyond max
+            if distance > args.max_dist or time_gap > args.max_span:
+                if distance > args.max_dist:
+                    print "Distance too big",
+                    if args.verbosity >= 1:
+                        print "(%s m)" % distance,
+
+                if time_gap > args.max_span:
+                    print "Time span too big",
+                    if args.verbosity >= 1:
+                        print "(%s s)" % time_gap,
+
                 print
                 continue
 
-            if time_gap > args.max_span:
-                print "Time span too big",
+            # Skip if neither time_gap or distance are okay
+            if time_gap > args.ok_span and distance > args.ok_dist:
+                print "Neither distance nor time span okay",
                 if args.verbosity >= 1:
-                    print "(%s s)" % time_gap,
+                    print "(%s m, %s s)" % (distance, time_gap),
                 print
                 continue
 
