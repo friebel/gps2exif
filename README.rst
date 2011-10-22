@@ -4,13 +4,17 @@ gps2exif reads .gpx files and tags JPEG images according to the time they have
 been taken.  It allows to fix image date/time and interpolates between GPS
 points.
 
- gps2exif [-h] [--ref-img REF_IMAGE] [--ref-time REF_TIME]
-          [--shift-time SHIFT_TIME] [--gpx GPX] [--max-dist MTRS]
-          [--max-span SECS] [--ok-dist MTRS] [--ok-span SECS] [-n] [-v]
-          IMAGE [IMAGE ...]
-
 General syntax
 --------------
+
+Usage::
+ gps2exif [-h] [-n] [-v] [--gpx GPX]
+          [--ref-img REF_IMAGE] [--ref-time REF_TIME]
+          [--shift-time SHIFT_TIME]
+          [--max-dist MTRS] [--max-span SECS]
+          [--ok-dist MTRS] [--ok-span SECS]
+          IMAGE [IMAGE ...]
+
 You can give multiple .gpx file using the '--gpx FILE' switch multiple times.
 Give the names of the image files to be processed at the end of the command
 line.  The switch '-n' will make a dry-run and not change any file.  The '-v'
