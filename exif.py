@@ -113,6 +113,9 @@ class exif_exif:
 
 
 class exif_exiv2:
+    #DATETIME_KEY = "Exif.Image.DateTime"
+    DATETIME_KEY = "Exif.Photo.DateTimeOriginal"
+
     def __init__(self):
         try:
             subprocess.check_output(["exiv2", "-V"])
@@ -132,14 +135,14 @@ class exif_exiv2:
         prog.wait()
 
     def get_time(self, filename):
-        img_time = self.get(filename, "Exif.Image.DateTime")
+        img_time = self.get(filename, self.DATETIME_KEY)
         img_time = parse_time(img_time)
         return img_time
 
     def set_time(self, filename, time_val):
         # TODO: preserve subsecond
         time_str = format_time(time_val)
-        self.set(filename, (("Exif.Image.DateTime", time_str), ))
+        self.set(filename, ((self.DATETIME_KEY, time_str), ))
 
     def get_gpslat(self, filename):
         lat = self.get(filename, "Exif.GPSInfo.GPSLatitude")
