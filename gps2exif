@@ -265,10 +265,25 @@ def main():
                 format_time_offset(time_offset)
 
         for target in args.images:
-            print "  %s" % target.name
+            print "  %s:" % target.name,
 
             file_time = exif.get_time(target.name)
             new_time = file_time + time_offset
+
+            if args.verbosity >= 2:
+                print "   ",
+                if args.verbosity >= 3:
+                    print "(%s)" % file_time,
+                print "%s.%02d ->" % (
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file_time)),
+                    (file_time % 1) * 100,
+                ),
+                if args.verbosity >= 3:
+                    print "(%s)" % new_time,
+            print "%s.%02d" % (
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(new_time)),
+                (new_time % 1) * 100,
+            )
 
             if args.no_action:
                 continue
