@@ -3,17 +3,17 @@
 # * Image time zone as cmd line parameter
 
 import argparse
-import calendar
 import exif
 import gpxparser
 import sys
 import time
 
 
-"""Parse time (and date) given on command line.  Returning tuple with two elements.
-First element is boolean indicating whether a date was given additional to time.
-Second alement is the parsed time/date value."""
 def parse_cmdline_time(txt):
+    """Parse time (and date) given on command line.  Returning tuple with two elements.
+    First element is boolean indicating whether a date was given additional to time.
+    Second alement is the parsed time/date value."""
+
     # Parse date and time, with date using "-" as separator and time using ":"
     try:
         return (True, time.mktime(time.strptime(txt, "%Y-%m-%d %H:%M:%S")))
@@ -152,7 +152,7 @@ def gpx_find_enclosing(gpxs, file_time):
             # Skip track if file time is out of its bounds
             if file_time < track[0].time or file_time > track[-1].time:
                 continue
-            
+
             for idx, p in enumerate(track[1:]):
                 if file_time < p.time:
                     return (track[idx], p)
@@ -163,7 +163,7 @@ def gpx_find_enclosing(gpxs, file_time):
 def main():
     global args
 
-    description="Set image location EXIF tags from corrsponding GPS track." \
+    description = "Set image location EXIF tags from corrsponding GPS track." \
             " Optionally shift the images' date/time first."
 
     parser = argparse.ArgumentParser(description=description)

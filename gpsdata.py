@@ -2,6 +2,7 @@ import math
 
 EARTH_RADIUS = 6378.0
 
+
 class GPSPoint:
     def __init__(self, lat, lon, ele=None, time=None):
         self.lat = lat
@@ -27,7 +28,7 @@ class GPSPoint:
         R = EARTH_RADIUS
 
         d = R * math.acos(
-                math.sin(lat1) * math.sin(lat2) + 
+                math.sin(lat1) * math.sin(lat2) +
                 math.cos(lat1) * math.cos(lat2) * math.cos(lon2 - lon1)
             )
 
@@ -70,7 +71,7 @@ class GPSPoint:
                 math.cos(lat1) * math.sin(dist / R) * math.cos(brng)
             )
         lon_i = lon1 + math.atan2(
-                math.sin(brng) * math.sin(dist / R) * math.cos(lat1), 
+                math.sin(brng) * math.sin(dist / R) * math.cos(lat1),
                 math.cos(dist / R) - math.sin(lat1) * math.sin(lat_i)
             )
 
@@ -81,9 +82,9 @@ class GPSPoint:
         #print "Interpolated point: lat %.11f lon %.11f" % (lat_i, lon_i)
 
         data = {
-                'lat' : lat_i / math.pi * 180,
-                'lon' : lon_i / math.pi * 180,
-                'time' : time,
+                'lat': lat_i / math.pi * 180,
+                'lon': lon_i / math.pi * 180,
+                'time': time,
             }
 
         if gps1.ele != None and gps2.ele != None:

@@ -1,12 +1,15 @@
-import sys, string, time, calendar
-from xml.dom import minidom, Node
+import calendar
+import time
+from xml.dom import minidom
 from gpsdata import GPSPoint
+
 
 def timeFromRFC3339(txt):
     if txt[-1] == 'Z':
         return calendar.timegm(time.strptime(txt, '%Y-%m-%dT%H:%M:%SZ'))
     else:
         raise RuntimeError('Cannot parse date %s' % repr(txt))
+
 
 class GPXFile:
     def __init__(self, file):
@@ -39,13 +42,13 @@ class GPXFile:
                 ptime = timeFromRFC3339(rfc3339)
                 track.append(GPSPoint(lat=lat, lon=lon, ele=ele, time=ptime))
 
-        track.sort(key=lambda x:x.time)
+        track.sort(key=lambda x: x.time)
 
     def flatten(self):
         flat = []
         for track, points in self.tracks.iteritems():
             flat.extend(points)
-        flat.sort(key=lambda x:x.time)
+        flat.sort(key=lambda x: x.time)
         self.tracks['flat'] = flat
 
     def getTrackNames(self):

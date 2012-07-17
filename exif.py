@@ -12,7 +12,7 @@
 #   > exiv2 -Pv -g "Exif.Image.DateTime" pr DST.JPG
 #   < 2011:08:14 19:42:33
 #
-#   > exiv2 -Pv -g "Exif.GPSInfo.GPSVersionID" pr GPS_EXAMPLE.JPG 
+#   > exiv2 -Pv -g "Exif.GPSInfo.GPSVersionID" pr GPS_EXAMPLE.JPG
 #   < 2 2 0 0
 #
 #   > exiv2 -Pkv pr GPS_EXAMPLE.JPG | grep GPS
@@ -52,9 +52,9 @@ ALTRES = 10
 exif = None
 
 
-"""Interpret given EXIF time as UTC time.  Timezone adaption should be applied
-afterwards."""
 def parse_time(txt):
+    """Interpret given EXIF time as UTC time.  Timezone adaption should be applied
+    afterwards."""
     return time.mktime(time.strptime(txt, "%Y:%m:%d %H:%M:%S"))
 
 
@@ -92,6 +92,7 @@ def format_latlon(num, sec_res=1000):
     num *= 60
     s = num
     return " ".join([format_rational(n, r) for n, r in ((d, 1), (m, 1), (s, sec_res))])
+
 
 class exif_exif:
     def __init__(self):
@@ -148,7 +149,7 @@ class exif_exiv2:
         lat = self.get(filename, "Exif.GPSInfo.GPSLatitude")
         try:
             lat = parse_latlon(lat)
-        except ValueError, e:
+        except ValueError:
             return None
 
         ref = self.get(filename, "Exif.GPSInfo.GPSLatitudeRef")
@@ -164,7 +165,7 @@ class exif_exiv2:
         lon = self.get(filename, "Exif.GPSInfo.GPSLongitude")
         try:
             lon = parse_latlon(lon)
-        except ValueError, e:
+        except ValueError:
             return None
 
         ref = self.get(filename, "Exif.GPSInfo.GPSLongitudeRef")
@@ -180,7 +181,7 @@ class exif_exiv2:
         alt = self.get(filename, "Exif.GPSInfo.GPSAltitude")
         try:
             alt = parse_rational(alt)
-        except ValueError, e:
+        except ValueError:
             return None
 
         ref = self.get(filename, "Exif.GPSInfo.GPSAltitudeRef")
@@ -252,11 +253,14 @@ def init():
 def get_time(filename):
     return exif.get_time(filename)
 
+
 def set_time(filename, time_val):
     return exif.set_time(filename, time_val)
 
+
 def get_gpslocation(filename):
     return exif.get_gpslocation(filename)
+
 
 def set_gpslocation(filename, lat, lon, alt):
     return exif.set_gpslocation(filename, lat, lon, alt)
