@@ -335,7 +335,7 @@ def main():
                 print
                 continue
 
-            # Skip if neither time_gap or distance are okay
+            # Skip if neither time_gap nor distance are okay
             if time_gap > args.ok_span and distance > args.ok_dist:
                 print "Neither distance nor time span okay",
                 if args.verbosity >= 1:
