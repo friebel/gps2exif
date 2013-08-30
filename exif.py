@@ -65,18 +65,18 @@ def format_time(secs):
 def parse_rational(txt):
     comps = txt.split('/')
     if len(comps) != 2:
-        raise ValueError("Not a valid rational number: %s" % txt)
+        raise ValueError("Not a valid rational number: {!r}".format(txt))
     return float(int(comps[0])) / int(comps[1])
 
 
 def format_rational(num, res=1000):
-    return "%d/%d" % (round(num * res), res)
+    return "{:d}/{:d}".format(round(num * res), res)
 
 
 def parse_latlon(txt):
     dms = txt.split()
     if len(dms) != 3:
-        raise ValueError("Not a valid coordinate: %s" % txt)
+        raise ValueError("Not a valid coordinate: {!r}".format(txt))
     dms = [parse_rational(c) for c in dms]
     deg = dms[0] + dms[1] / 60 + dms[2] / 3600
     return deg
@@ -130,7 +130,7 @@ class exif_exiv2:
 
     def set(self, filename, kvlist):
         assert kvlist
-        params = ["-M set %s %s" % (k, v) for k, v in kvlist]
+        params = ["-M set {} {}".format(k, v) for k, v in kvlist]
         cmdline = ["exiv2"] + params + [filename]
         prog = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
         prog.wait()

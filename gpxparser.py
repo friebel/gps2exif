@@ -8,7 +8,7 @@ def timeFromRFC3339(txt):
     if txt[-1] == 'Z':
         return calendar.timegm(time.strptime(txt, '%Y-%m-%dT%H:%M:%SZ'))
     else:
-        raise RuntimeError('Cannot parse date %s' % repr(txt))
+        raise RuntimeError('Cannot parse date: {!r}'.format(txt))
 
 
 class GPXFile:

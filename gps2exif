@@ -35,7 +35,7 @@ def parse_cmdline_time(txt):
     except ValueError:
         pass
 
-    raise ValueError("Can not parse date/time %s" % repr(txt))
+    raise ValueError("Can not parse date/time {!r}".format(txt))
 
 
 def format_time_offset(delta):
@@ -50,7 +50,7 @@ def format_time_offset(delta):
     else:
         sign = "+"
 
-    return "%s%d:%02d:%02d" % (
+    return "{}{:d}:{:02d}:{:02d}".format(
             sign,
             delta / 3600,
             delta / 60 % 60,
@@ -59,7 +59,7 @@ def format_time_offset(delta):
 
 
 def parse_time_offset(txt):
-    parse_err = ValueError("Can not parse time offset %s" % repr(txt))
+    parse_err = ValueError("Can not parse time offset {!r}".format(txt))
 
     if not txt:
         raise parse_err
@@ -130,16 +130,15 @@ def process_timeref_args(ref_image, ref_time):
 
     # Print some info
     if args.verbosity >= 1:
-        print "Reference image date/time is set to: %s.%02d" % (
+        print "Reference image date/time is set to: {}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_img_time)),
                 (ref_img_time % 1) * 100,
             )
-        print "Reference image date/time should be: %s.%02d" % (
+        print "Reference image date/time should be: {}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_time)),
                 (ref_time % 1) * 100,
             )
-        print "Date/time fixing delta: %s" % \
-                format_time_offset(time_offset)
+        print "Date/time fixing delta: {}".format(format_time_offset(time_offset))
 
     return time_offset
 
@@ -225,7 +224,7 @@ def main():
 
     # Time zone info
     if args.verbosity >= 1:
-        print "Assuming image time zone %s/%s" % time.tzname
+        print "Assuming image time zone {0[0]}/{0[1]}".format(time.tzname)
 
     time_offset = None
 
@@ -244,10 +243,10 @@ def main():
     # Read GPS data
     gpxs = []
     for gpxfile in args.gpxs:
-        print "Reading GPX file %s" % gpxfile.name
+        print "Reading GPX file {}".format(gpxfile.name)
         data = gpxparser.GPXFile(gpxfile)
         if args.verbosity >= 1:
-            print "  %d points in %d tracks" % (
+            print "  {:d} points in {:d} tracks".format(
                     sum([len(t) for t_id, t in data.tracks.iteritems()]),
                     len(data.tracks),
                 )
@@ -255,17 +254,16 @@ def main():
 
         if args.verbosity >= 2:
             for t_id, track in data.tracks.iteritems():
-                print "Track %s:" % t_id
+                print "Track {}:".format(t_id)
                 for p in track:
-                    print "  %s" % p
+                    print "  {}".format(p)
 
     # Fix time offset
     if time_offset:
-        print "Applying date/time delta %s" % \
-                format_time_offset(time_offset)
+        print "Applying date/time delta {}".format(format_time_offset(time_offset))
 
         for target in args.images:
-            print "  %s:" % target.name,
+            print "  {}:".format(target.name),
 
             file_time = exif.get_time(target.name)
             new_time = file_time + time_offset
@@ -273,14 +271,14 @@ def main():
             if args.verbosity >= 2:
                 print "   ",
                 if args.verbosity >= 3:
-                    print "(%s)" % file_time,
-                print "%s.%02d ->" % (
+                    print "({})".format(file_time),
+                print "{}.{:02d} ->".format(
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file_time)),
                     (file_time % 1) * 100,
                 ),
                 if args.verbosity >= 3:
-                    print "(%s)" % new_time,
-            print "%s.%02d" % (
+                    print "({})".format(new_time),
+            print "{}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(new_time)),
                 (new_time % 1) * 100,
             )
@@ -295,7 +293,7 @@ def main():
         print "Setting GPS data"
 
         for target in args.images:
-            print "  %s:" % target.name,
+            print "  {}:".format(target.name),
             if args.verbosity >= 2:
                 print
 
@@ -313,11 +311,11 @@ def main():
             distance = gpx_points[0].distance(gpx_points[1]) * 1000
 
             if args.verbosity >= 2:
-                print "    Time:     %s" % file_time
-                print "    Before:   %s" % gpx_points[0]
-                print "    After:    %s" % gpx_points[1]
-                print "    Time gap: %s s" % time_gap
-                print "    Distance: %.1f m" % distance
+                print "    Time:     {}".format(file_time)
+                print "    Before:   {}".format(gpx_points[0])
+                print "    After:    {}".format(gpx_points[1])
+                print "    Time gap: {} s".format(time_gap)
+                print "    Distance: {:.1f} m".format(distance)
                 print "   ",
 
             # Skip if time_gap or distance beyond max
@@ -325,12 +323,12 @@ def main():
                 if distance > args.max_dist:
                     print "Distance too big",
                     if args.verbosity >= 1:
-                        print "(%s m)" % distance,
+                        print "({} m)".format(distance),
 
                 if time_gap > args.max_span:
                     print "Time span too big",
                     if args.verbosity >= 1:
-                        print "(%s s)" % time_gap,
+                        print "({} s)".format(time_gap),
 
                 print
                 continue
@@ -339,7 +337,7 @@ def main():
             if time_gap > args.ok_span and distance > args.ok_dist:
                 print "Neither distance nor time span okay",
                 if args.verbosity >= 1:
-                    print "(%.1f m > %s m, %s s > %s s)" % (distance, args.ok_dist, time_gap, args.ok_span),
+                    print "({:.1f} m > {} m, {} s > {} s)".format(distance, args.ok_dist, time_gap, args.ok_span),
                 print
                 continue
 
@@ -347,7 +345,7 @@ def main():
             image_gps = gpx_points[0].interpolate(gpx_points[1], file_time)
 
             if args.verbosity >= 2:
-                print "Position: %s" % image_gps
+                print "Position: {}".format(image_gps)
             else:
                 print "ok"
 

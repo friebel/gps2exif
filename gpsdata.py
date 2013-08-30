@@ -11,12 +11,12 @@ class GPSPoint:
         self.time = time
 
     def __repr__(self):
-        return "GPSPoint(%s)" % ', '.join((
-            'time=%s' % self.time,
-            'lat=%.6f' % self.lat,
-            'lon=%.6f' % self.lon,
-            'ele=%s' % self.ele,
-            ))
+        return "GPSPoint({})".format(', '.join((
+            'time={}'.format(self.time),
+            'lat={:.6f}'.format(self.lat),
+            'lon={:.6f}'.format(self.lon),
+            'ele={}'.format(self.ele),
+            )))
 
     """Calculate distance in km between two GPS points."""
     def distance(self, other):
@@ -75,11 +75,11 @@ class GPSPoint:
                 math.cos(dist / R) - math.sin(lat1) * math.sin(lat_i)
             )
 
-        #print "Fraction: %s" % frac
-        #print "Distance: %s" % dist
-        #print "Start point:        lat %.11f lon %.11f" % (lat1, lon1)
-        #print "End point:          lat %.11f lon %.11f" % (lat2, lon2)
-        #print "Interpolated point: lat %.11f lon %.11f" % (lat_i, lon_i)
+        #print "Fraction: {}".format(frac)
+        #print "Distance: {}".format(dist)
+        #print "Start point:        lat {:.11f} lon {:.11f}".format(lat1, lon1)
+        #print "End point:          lat {:.11f} lon {:.11f}".format(lat2, lon2)
+        #print "Interpolated point: lat {:.11f} lon {:.11f}".format(lat_i, lon_i)
 
         data = {
                 'lat': lat_i / math.pi * 180,
