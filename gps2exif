@@ -339,7 +339,7 @@ def main():
             if time_gap > args.ok_span and distance > args.ok_dist:
                 print "Neither distance nor time span okay",
                 if args.verbosity >= 1:
-                    print "(%s m, %s s)" % (distance, time_gap),
+                    print "(%.1f m > %s m, %s s > %s s)" % (distance, args.ok_dist, time_gap, args.ok_span),
                 print
                 continue
 
