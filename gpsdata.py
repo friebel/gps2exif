@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import math
 
 EARTH_RADIUS = 6378.0
@@ -75,11 +77,11 @@ class GPSPoint:
                 math.cos(dist / R) - math.sin(lat1) * math.sin(lat_i)
             )
 
-        #print "Fraction: {}".format(frac)
-        #print "Distance: {}".format(dist)
-        #print "Start point:        lat {:.11f} lon {:.11f}".format(lat1, lon1)
-        #print "End point:          lat {:.11f} lon {:.11f}".format(lat2, lon2)
-        #print "Interpolated point: lat {:.11f} lon {:.11f}".format(lat_i, lon_i)
+        #print("Fraction: {}".format(frac))
+        #print("Distance: {}".format(dist))
+        #print("Start point:        lat {:.11f} lon {:.11f}".format(lat1, lon1))
+        #print("End point:          lat {:.11f} lon {:.11f}".format(lat2, lon2))
+        #print("Interpolated point: lat {:.11f} lon {:.11f}".format(lat_i, lon_i))
 
         data = {
                 'lat': lat_i / math.pi * 180,
