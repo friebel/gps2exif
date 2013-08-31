@@ -5,10 +5,11 @@ from gpsdata import GPSPoint
 
 
 def timeFromRFC3339(txt):
-    if txt[-1] == 'Z':
-        return calendar.timegm(time.strptime(txt, '%Y-%m-%dT%H:%M:%SZ'))
-    else:
-        raise RuntimeError('Cannot parse date: {!r}'.format(txt))
+    dtformat = '%Y-%m-%dT%H:%M:%SZ' 
+    try:
+        return calendar.timegm(time.strptime(txt, dtformat))
+    except ValueError:
+        raise ValueError('Cannot parse date: {!r} does not match format {!r}'.format(txt, dtformat))
 
 
 class GPXFile:
