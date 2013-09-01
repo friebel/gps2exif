@@ -265,19 +265,17 @@ def main():
             new_time = file_time + time_offset
 
             if args.verbosity >= 2:
-                print("   ", end="")
-                if args.verbosity >= 3:
-                    print("({})".format(file_time), end="")
-                print("{}.{:02d} ->".format(
+                print(" {}.{:02d} ->".format(
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file_time)),
                     int((file_time % 1) * 100),
                 ), end="")
-                if args.verbosity >= 3:
-                    print("({})".format(new_time), end="")
-            print("{}.{:02d}".format(
+            print(" {}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(new_time)),
                 int((new_time % 1) * 100),
-            ))
+            ), end="")
+            if args.verbosity >= 3:
+                print(" ({} -> {}) ".format(file_time, new_time), end="")
+            print()
 
             if args.no_action:
                 continue
