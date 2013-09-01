@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 from __future__ import print_function
 
 import argparse
@@ -51,9 +52,9 @@ def format_time_offset(delta):
 
     return "{}{:d}:{:02d}:{:02d}".format(
             sign,
-            delta / 3600,
-            delta / 60 % 60,
-            delta % 60,
+            delta // 3600,
+            delta // 60 % 60,
+            int(delta % 60),
         )
 
 
@@ -131,11 +132,11 @@ def process_timeref_args(ref_image, ref_time):
     if args.verbosity >= 1:
         print("Reference image date/time is set to: {}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_img_time)),
-                (ref_img_time % 1) * 100,
+                int((ref_img_time % 1) * 100),
             ))
         print("Reference image date/time should be: {}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_time)),
-                (ref_time % 1) * 100,
+                int((ref_time % 1) * 100),
             ))
         print("Date/time fixing delta: {}".format(format_time_offset(time_offset)))
 
@@ -273,13 +274,13 @@ def main():
                     print("({})".format(file_time), end="")
                 print("{}.{:02d} ->".format(
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file_time)),
-                    (file_time % 1) * 100,
+                    int((file_time % 1) * 100),
                 ), end="")
                 if args.verbosity >= 3:
                     print("({})".format(new_time), end="")
             print("{}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(new_time)),
-                (new_time % 1) * 100,
+                int((new_time % 1) * 100),
             ))
 
             if args.no_action:
