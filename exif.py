@@ -103,7 +103,7 @@ class exif_exif:
 
     def get_time(self, filename):
         img_time = subprocess.check_output(
-                ["exif", "-mt", "0x9003", filename])
+                ["exif", "-mt", "0x9003", filename]).decode(encoding='UTF-8')
         img_time = parse_time(img_time.strip())
         return img_time
 
@@ -126,7 +126,7 @@ class exif_exiv2:
     def get(self, filename, key):
         prog = subprocess.Popen(["exiv2", "-Pv", "-g", key, "pr", filename], stdout=subprocess.PIPE)
         prog.wait()
-        return prog.stdout.read().strip()
+        return prog.stdout.read().decode(encoding='UTF-8').strip()
 
     def set(self, filename, kvlist):
         assert kvlist
