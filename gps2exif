@@ -234,11 +234,7 @@ def main():
 
     # Calculate time offset from reference image
     if args.ref_image or args.ref_time:
-        try:
-            time_offset = process_timeref_args(args.ref_image, args.ref_time)
-        except:
-            print("Error updating EXIF data")
-            return -1
+        time_offset = process_timeref_args(args.ref_image, args.ref_time)
 
     # Read GPS data
     gpxs = []
