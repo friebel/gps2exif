@@ -32,7 +32,7 @@ up the GPS coorinates:
   your GPS device showing GPS time.
 
   The syntax is `--ref-img REF_IMAGE --ref-time REF_TIME`.
-  REF_TIME should be formatted like `2011-10-22 14:42:07`.
+  `REF_TIME` should be formatted like `2011-10-22 14:42:07`.
 - If you know the time offset, you can give it via
   `--shift-time SHIFT_TIME`.
   For example, use `--shift-time=+1:09` to add 1 minute, 9 seconds
