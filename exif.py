@@ -70,7 +70,7 @@ def parse_rational(txt):
 
 
 def format_rational(num, res=1000):
-    return "{:d}/{:d}".format(round(num * res), res)
+    return "{:d}/{:d}".format(int(round(num * res)), res)
 
 
 def parse_latlon(txt):
