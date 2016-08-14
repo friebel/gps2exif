@@ -223,7 +223,7 @@ class exif_exiv2:
                 data.append(("Exif.GPSInfo.GPSAltitudeRef", "0"))
             else:
                 data.append(("Exif.GPSInfo.GPSAltitudeRef", "1"))
-            data.append(("Exif.GPSInfo.GPSAltitude", format_rational(alt, ALTRES)))
+            data.append(("Exif.GPSInfo.GPSAltitude", format_rational(abs(alt), ALTRES)))
 
         if data:
             data.append(("Exif.GPSInfo.GPSVersionID", "2 2 0 0"))
