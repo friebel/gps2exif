@@ -136,7 +136,7 @@ class GPSPoint:
                 'time': time,
             }
 
-        if gps1.ele != None and gps2.ele != None:
+        if gps1.ele is not None and gps2.ele is not None:
             data['ele'] = gps1.ele + frac * (gps2.ele - gps1.ele)
         else:
             data['ele'] = None
