@@ -26,6 +26,34 @@ class GPSPoint:
             'ele={}'.format(self.ele),
             )))
 
+    def __str__(self):
+        s = "<{lat:+.6f},{lon:+.6f}".format(**self.__dict__)
+        if self.ele is not None:
+            s += ",{ele:.2f}".format(ele=self.ele)
+        s += ">"
+        return s
+
+    @classmethod
+    def from_str(cls, s):
+        """
+        Create GPSPoint from formatted string.
+        :param s: string to interpret, e,g. "<+20.01234,+20.56789>
+        :returns: object of class GPSPoint corresponding to the input string
+        :raises ValueError: invalid input
+        """
+
+        m = re.match(r'<(.*)>', s)
+        if m:
+            s = m.group(1)
+        d = s.split(',')
+        if len(d) not in (2, 3):
+            raise ValueError("Cannot parse GPSPoint string representation")
+        lat = float(d.pop(0))
+        lon = float(d.pop(0))
+        ele = float(d.pop(0)) if d else None
+        return cls(lat, lon, ele)
+
+
     def distance(self, other):
         """
         Calculate distance between this and another GPSPoint.
