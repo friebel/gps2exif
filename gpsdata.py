@@ -26,8 +26,13 @@ class GPSPoint:
             'ele={}'.format(self.ele),
             )))
 
-    """Calculate distance in km between two GPS points."""
     def distance(self, other):
+        """
+        Calculate distance between this and another GPSPoint.
+        :param other: other GPSPoint
+        :returns: distance in km
+        """
+
         lat1 = self.lat / 180. * math.pi
         lon1 = self.lon / 180. * math.pi
         lat2 = other.lat / 180. * math.pi
@@ -42,8 +47,13 @@ class GPSPoint:
 
         return d
 
-    """Interpolate between two GPS points."""
     def interpolate(self, other, time):
+        """Interpolate between two GPSpoints.
+        :param other: a second object of class GPSPoint
+        :param time: point in time to interpolate; must be between time of this and `other` GPSPoint
+        :returns: object of class GPSPoint corresponding to the interpolated location at given `time`
+        """
+
         if self.time < other.time:
             gps1 = self
             gps2 = other
