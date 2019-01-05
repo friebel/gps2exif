@@ -1,12 +1,18 @@
 from __future__ import print_function
 
 import math
+import re
+
 
 EARTH_RADIUS = 6378.0
 
 
 class GPSPoint:
     def __init__(self, lat, lon, ele=None, time=None):
+        if abs(lat) > 180:
+            raise ValueError("Invalid latitude")
+        if abs(lon) > 90:
+            raise ValueError("Invalid longitude")
         self.lat = lat
         self.lon = lon
         self.ele = ele
