@@ -1,7 +1,7 @@
 gps2exif - GPS-tagging of JPEG files
 ====================================
 gps2exif reads .gpx files and tags JPEG images according to the
-time they have been taken.  It allows to fix image date/time and
+time they have been taken. It allows to fix image date/time and
 interpolates between GPS points.
 
 General syntax
@@ -15,16 +15,16 @@ General syntax
 
 You can give multiple .gpx files using the `--gpx FILE` switch
 multiple times. Give the names of the image files to be processed
-at the end of the command line.  The switch `-n` will make a
-dry-run and not change any file.  The `-v` switch increases
+at the end of the command line. The switch `-n` will make a
+dry-run and not change any file. The `-v` switch increases
 verbosity.
 
 Fixing image date/time
 ----------------------
 A precise date/time stored in the image's EXIF data is crucial for
-associating the GPS track with the image.  gps2exif offers two
+associating the GPS track with the image. gps2exif offers two
 ways to fix the date/time stored in the JPEG files before looking
-up the GPS coorinates:
+up the GPS coordinates:
 
 - You can either give the name of a file and the correct date/time
   of the file. gps2exif will calculate the time offset and apply
@@ -47,7 +47,7 @@ is deemed good enough or not.
 
 The thresholds are checked on the two GPS points around the time
 your photo was taken: the last GPS point before and the first GPS
-point after the time of your photo.  You can set thresholds on the
+point after the time of your photo. You can set thresholds on the
 time span and the distance between these two GPS points.
 
 With `--max-dist MTRS` and `--max-span SECS` you set hard
