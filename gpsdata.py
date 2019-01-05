@@ -75,6 +75,9 @@ class GPSPoint:
 
         return d
 
+    def __sub__(self, other):
+        return self.distance(other)
+
     def interpolate(self, other, time):
         """Interpolate between two GPSpoints.
         :param other: a second object of class GPSPoint
