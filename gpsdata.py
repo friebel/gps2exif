@@ -1,12 +1,23 @@
+from __future__ import annotations
+
 import math
 import re
+
+from typing import Optional
+from typing import Type
 
 
 EARTH_RADIUS = 6378.0
 
 
 class GPSPoint:
-    def __init__(self, lat, lon, ele=None, time=None):
+    def __init__(
+        self: GPSPoint,
+        lat: float,
+        lon: float,
+        ele: Optional[float] = None,
+        time: Optional[float] = None,
+    ) -> None:
         if abs(lat) > 180:
             raise ValueError("Invalid latitude")
         if abs(lon) > 90:
@@ -16,7 +27,7 @@ class GPSPoint:
         self.ele = ele
         self.time = time
 
-    def __repr__(self):
+    def __repr__(self: GPSPoint) -> str:
         return "GPSPoint({})".format(
             ", ".join(
                 (
@@ -28,7 +39,7 @@ class GPSPoint:
             )
         )
 
-    def __str__(self):
+    def __str__(self: GPSPoint) -> str:
         s = "<{lat:+.6f},{lon:+.6f}".format(**self.__dict__)
         if self.ele is not None:
             s += ",{ele:.2f}".format(ele=self.ele)
@@ -36,7 +47,7 @@ class GPSPoint:
         return s
 
     @classmethod
-    def from_str(cls, s):
+    def from_str(cls: Type[GPSPoint], s: str) -> GPSPoint:
         """
         Create GPSPoint from formatted string.
         :param s: string to interpret, e,g. "<+20.01234,+20.56789>
@@ -55,7 +66,7 @@ class GPSPoint:
         ele = float(d.pop(0)) if d else None
         return cls(lat, lon, ele)
 
-    def distance(self, other):
+    def distance(self: GPSPoint, other: GPSPoint) -> float:
         """
         Calculate distance between this and another GPSPoint.
         :param other: other GPSPoint
@@ -76,10 +87,10 @@ class GPSPoint:
 
         return d
 
-    def __sub__(self, other):
+    def __sub__(self: GPSPoint, other: GPSPoint) -> float:
         return self.distance(other)
 
-    def interpolate(self, other, time):
+    def interpolate(self: GPSPoint, other: GPSPoint, time: float) -> GPSPoint:
         """Interpolate between two GPSpoints.
         :param other: a second object of class GPSPoint
         :param time: point in time to interpolate; must be between time of this
@@ -100,6 +111,8 @@ class GPSPoint:
             gps1 = other
             gps2 = self
 
+        assert gps1.time is not None
+        assert gps2.time is not None
         assert gps1.time <= time and time <= gps2.time
 
         lat1 = gps1.lat / 180.0 * math.pi
@@ -139,18 +152,15 @@ class GPSPoint:
         # print("End point:          lat {:.11f} lon {:.11f}".format(lat2, lon2))
         # print("Interpolated point: lat {:.11f} lon {:.11f}".format(lat_i, lon_i))
 
-        data = {
-            "lat": lat_i / math.pi * 180,
-            "lon": lon_i / math.pi * 180,
-            "time": time,
-        }
+        new_lat = lat_i / math.pi * 180
+        new_lon = lon_i / math.pi * 180
+        new_time = time
 
         if gps1.ele is not None and gps2.ele is not None:
-            data["ele"] = gps1.ele + frac * (gps2.ele - gps1.ele)
-        else:
-            data["ele"] = None
+            new_ele = gps1.ele + frac * (gps2.ele - gps1.ele)
+            return GPSPoint(lat=new_lat, lon=new_lon, ele=new_ele, time=new_time)
 
-        return GPSPoint(**data)
+        return GPSPoint(lat=new_lat, lon=new_lon, time=new_time)
 
 
 # vim: set ts=4 sts=4 sw=4
