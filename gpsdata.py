@@ -88,6 +88,11 @@ class GPSPoint:
                   location at given `time`
         """
 
+        if self.time is None:
+            raise ValueError("GPSPoint must have a time set to interpolate")
+        if other.time is None:
+            raise ValueError("'other' GPSPoint must have a time set to interpolate")
+
         if self.time < other.time:
             gps1 = self
             gps2 = other
