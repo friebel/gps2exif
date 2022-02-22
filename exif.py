@@ -63,7 +63,7 @@ def format_time(secs):
 
 
 def parse_rational(txt):
-    comps = txt.split('/')
+    comps = txt.split("/")
     if len(comps) != 2:
         raise ValueError("Not a valid rational number: {!r}".format(txt))
     return float(int(comps[0])) / int(comps[1])
@@ -102,19 +102,31 @@ class exif_exif:
             raise
 
     def get_time(self, filename):
-        img_time = subprocess.check_output(
-                ["exif", "-mt", "0x9003", filename]).decode(encoding='UTF-8')
+        img_time = subprocess.check_output(["exif", "-mt", "0x9003", filename]).decode(
+            encoding="UTF-8"
+        )
         img_time = parse_time(img_time.strip())
         return img_time
 
     def set_time(self, filename, time_val):
         time_str = format_time(time_val)
         subprocess.check_output(
-                ["exif", "--ifd=EXIF", "-mt", "0x9003", "--set-value", time_str, "-o", filename, filename])
+            [
+                "exif",
+                "--ifd=EXIF",
+                "-mt",
+                "0x9003",
+                "--set-value",
+                time_str,
+                "-o",
+                filename,
+                filename,
+            ]
+        )
 
 
 class exif_exiv2:
-    #DATETIME_KEY = "Exif.Image.DateTime"
+    # DATETIME_KEY = "Exif.Image.DateTime"
     DATETIME_KEY = "Exif.Photo.DateTimeOriginal"
 
     def __init__(self):
@@ -124,9 +136,11 @@ class exif_exiv2:
             raise
 
     def get(self, filename, key):
-        prog = subprocess.Popen(["exiv2", "-Pv", "-g", key, "pr", filename], stdout=subprocess.PIPE)
+        prog = subprocess.Popen(
+            ["exiv2", "-Pv", "-g", key, "pr", filename], stdout=subprocess.PIPE
+        )
         prog.wait()
-        return prog.stdout.read().decode(encoding='UTF-8').strip()
+        return prog.stdout.read().decode(encoding="UTF-8").strip()
 
     def set(self, filename, kvlist):
         assert kvlist
@@ -143,7 +157,7 @@ class exif_exiv2:
     def set_time(self, filename, time_val):
         # TODO: preserve subsecond
         time_str = format_time(time_val)
-        self.set(filename, ((self.DATETIME_KEY, time_str), ))
+        self.set(filename, ((self.DATETIME_KEY, time_str),))
 
     def get_gpslat(self, filename):
         lat = self.get(filename, "Exif.GPSInfo.GPSLatitude")

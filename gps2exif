@@ -26,8 +26,17 @@ def parse_cmdline_time(txt):
     # Parse time only, with ":" as separator
     try:
         t = time.strptime(txt, "%H:%M:%S")
-        t = (2000, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec,
-                t.tm_wday, t.tm_yday, t.tm_isdst)
+        t = (
+            2000,
+            t.tm_mon,
+            t.tm_mday,
+            t.tm_hour,
+            t.tm_min,
+            t.tm_sec,
+            t.tm_wday,
+            t.tm_yday,
+            t.tm_isdst,
+        )
         return (False, time.mktime(t))
     except ValueError:
         pass
@@ -39,7 +48,7 @@ def format_time_offset(delta):
     if not delta:
         return ""
 
-    neg = (delta < 0)
+    neg = delta < 0
     delta = abs(int(delta))
 
     if neg:
@@ -48,11 +57,11 @@ def format_time_offset(delta):
         sign = "+"
 
     return "{}{:d}:{:02d}:{:02d}".format(
-            sign,
-            delta // 3600,
-            delta // 60 % 60,
-            int(delta % 60),
-        )
+        sign,
+        delta // 3600,
+        delta // 60 % 60,
+        int(delta % 60),
+    )
 
 
 def parse_time_offset(txt):
@@ -62,9 +71,9 @@ def parse_time_offset(txt):
         raise parse_err
 
     # Save and remove +/- sign
-    if txt[0] == '+':
+    if txt[0] == "+":
         sign = 1
-    elif txt[0] == '-':
+    elif txt[0] == "-":
         sign = -1
     else:
         raise parse_err
@@ -72,7 +81,7 @@ def parse_time_offset(txt):
     txt = txt[1:]
 
     # Parse days
-    values = txt.split(' ', 1)
+    values = txt.split(" ", 1)
     if len(values) > 1:
         try:
             days = int(values[0])
@@ -83,7 +92,7 @@ def parse_time_offset(txt):
         days = 0
 
     # Parse [[%H:]%M:]%S
-    values = txt.split(':', 2)
+    values = txt.split(":", 2)
 
     secs = int(values[-1])
     del values[-1]
@@ -117,24 +126,37 @@ def process_timeref_args(ref_image, ref_time):
     if not ref_time_hasdate:
         img = time.localtime(ref_img_time)
         ref = time.localtime(ref_time)
-        ref_time = time.mktime((
-            img.tm_year, img.tm_mon, img.tm_mday,
-            ref.tm_hour, ref.tm_min, ref.tm_sec,
-            img.tm_wday, img.tm_yday, img.tm_isdst))
+        ref_time = time.mktime(
+            (
+                img.tm_year,
+                img.tm_mon,
+                img.tm_mday,
+                ref.tm_hour,
+                ref.tm_min,
+                ref.tm_sec,
+                img.tm_wday,
+                img.tm_yday,
+                img.tm_isdst,
+            )
+        )
 
     # Calculate time offset
     time_offset = ref_time - ref_img_time
 
     # Print some info
     if args.verbosity >= 1:
-        print("Reference image date/time is set to: {}.{:02d}".format(
+        print(
+            "Reference image date/time is set to: {}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_img_time)),
                 int((ref_img_time % 1) * 100),
-            ))
-        print("Reference image date/time should be: {}.{:02d}".format(
+            )
+        )
+        print(
+            "Reference image date/time should be: {}.{:02d}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ref_time)),
                 int((ref_time % 1) * 100),
-            ))
+            )
+        )
         print("Date/time fixing delta: {}".format(format_time_offset(time_offset)))
 
     return time_offset
@@ -159,48 +181,96 @@ def gpx_find_enclosing(gpxs, file_time):
 def main():
     global args
 
-    description = "Set image location EXIF tags from corrsponding GPS track." \
-            " Optionally shift the images' date/time first."
+    description = (
+        "Set image location EXIF tags from corrsponding GPS track."
+        " Optionally shift the images' date/time first."
+    )
 
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument("--ref-img", dest="ref_image", type=argparse.FileType('r'),
-            help="reference image file name for shifting time using --ref-time")
+    parser.add_argument(
+        "--ref-img",
+        dest="ref_image",
+        type=argparse.FileType("r"),
+        help="reference image file name for shifting time using --ref-time",
+    )
 
-    parser.add_argument("--ref-time", dest="ref_time",
-            help=
-            "Corrected reference image date/time to calculate time offset for shifting."
-            " If one of --ref-img and --ref-time is given the other one must be given too.")
+    parser.add_argument(
+        "--ref-time",
+        dest="ref_time",
+        help="Corrected reference image date/time to calculate time offset for shifting."
+        " If one of --ref-img and --ref-time is given the other one must be given too.",
+    )
 
-    parser.add_argument("--shift-time", dest="shift_time",
-            help=
-            "Shift time of all images by given offset."
-            " Example: '--shift-time=+1:09' to add 1 minute, 9 seconds"
-            " to the images' EXIF time.")
+    parser.add_argument(
+        "--shift-time",
+        dest="shift_time",
+        help="Shift time of all images by given offset."
+        " Example: '--shift-time=+1:09' to add 1 minute, 9 seconds"
+        " to the images' EXIF time.",
+    )
 
-    parser.add_argument("--gpx", dest="gpxs", metavar="GPX", type=argparse.FileType('r'), action="append", default=[],
-            help=".gpx GPS track file")
+    parser.add_argument(
+        "--gpx",
+        dest="gpxs",
+        metavar="GPX",
+        type=argparse.FileType("r"),
+        action="append",
+        default=[],
+        help=".gpx GPS track file",
+    )
 
-    parser.add_argument("--max-dist", dest="max_dist", metavar="MTRS", type=int, default=200,
-            help="skip if enclosing GPS points are more than MTRS meters apart (default: %(default)s)")
+    parser.add_argument(
+        "--max-dist",
+        dest="max_dist",
+        metavar="MTRS",
+        type=int,
+        default=200,
+        help="skip if enclosing GPS points are more than MTRS meters apart (default: %(default)s)",
+    )
 
-    parser.add_argument("--max-span", dest="max_span", metavar="SECS", type=int, default=3600,
-            help="skip if enclosing GPS points are more than SECS seconds apart (default: %(default)s)")
+    parser.add_argument(
+        "--max-span",
+        dest="max_span",
+        metavar="SECS",
+        type=int,
+        default=3600,
+        help="skip if enclosing GPS points are more than SECS seconds apart (default: %(default)s)",
+    )
 
-    parser.add_argument("--ok-dist", dest="ok_dist", metavar="MTRS", type=int, default=32,
-            help="assign if enclosing GPS points are less than MTRS meters apart (default: %(default)s)")
+    parser.add_argument(
+        "--ok-dist",
+        dest="ok_dist",
+        metavar="MTRS",
+        type=int,
+        default=32,
+        help="assign if enclosing GPS points are less than MTRS meters apart (default: %(default)s)",
+    )
 
-    parser.add_argument("--ok-span", dest="ok_span", metavar="SECS", type=int, default=10,
-            help="assign if enclosing GPS points are less than SECS seconds apart (default: %(default)s)")
+    parser.add_argument(
+        "--ok-span",
+        dest="ok_span",
+        metavar="SECS",
+        type=int,
+        default=10,
+        help="assign if enclosing GPS points are less than SECS seconds apart (default: %(default)s)",
+    )
 
-    parser.add_argument("-n", dest="no_action", action="store_true", default=False,
-            help="do not change any files")
+    parser.add_argument(
+        "-n",
+        dest="no_action",
+        action="store_true",
+        default=False,
+        help="do not change any files",
+    )
 
-    parser.add_argument("-v", dest="verbosity", action="count", default=0,
-            help="increase verbosity")
+    parser.add_argument(
+        "-v", dest="verbosity", action="count", default=0, help="increase verbosity"
+    )
 
-    parser.add_argument("images", metavar="IMAGE", nargs="+",
-            help="image file to process")
+    parser.add_argument(
+        "images", metavar="IMAGE", nargs="+", help="image file to process"
+    )
 
     try:
         args = parser.parse_args()
@@ -239,10 +309,12 @@ def main():
         print("Reading GPX file {}".format(gpxfile.name))
         data = gpxparser.GPXFile(gpxfile)
         if args.verbosity >= 1:
-            print("  {:d} points in {:d} tracks".format(
+            print(
+                "  {:d} points in {:d} tracks".format(
                     sum([len(t) for t_id, t in data.tracks.iteritems()]),
                     len(data.tracks),
-                ))
+                )
+            )
         gpxs.append(data)
 
         if args.verbosity >= 2:
@@ -262,14 +334,20 @@ def main():
             new_time = file_time + time_offset
 
             if args.verbosity >= 2:
-                print(" {}.{:02d} ->".format(
-                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file_time)),
-                    int((file_time % 1) * 100),
-                ), end="")
-            print(" {}.{:02d}".format(
-                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(new_time)),
-                int((new_time % 1) * 100),
-            ), end="")
+                print(
+                    " {}.{:02d} ->".format(
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file_time)),
+                        int((file_time % 1) * 100),
+                    ),
+                    end="",
+                )
+            print(
+                " {}.{:02d}".format(
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(new_time)),
+                    int((new_time % 1) * 100),
+                ),
+                end="",
+            )
             if args.verbosity >= 3:
                 print(" ({} -> {}) ".format(file_time, new_time), end="")
             print()
@@ -328,7 +406,12 @@ def main():
             if time_gap > args.ok_span and distance > args.ok_dist:
                 print("Neither distance nor time span okay", end="")
                 if args.verbosity >= 1:
-                    print("({:.1f} m > {} m, {} s > {} s)".format(distance, args.ok_dist, time_gap, args.ok_span), end="")
+                    print(
+                        "({:.1f} m > {} m, {} s > {} s)".format(
+                            distance, args.ok_dist, time_gap, args.ok_span
+                        ),
+                        end="",
+                    )
                 print()
                 continue
 
